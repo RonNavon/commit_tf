@@ -367,123 +367,123 @@ module "app_service" {
 # Internal HTTPS Load Balancer (regional, INTERNAL_MANAGED, HTTPS-only).
 # -----------------------------------------------------------------------------
 
-# module "ilb_health_check" {
-#   source       = "../../modules/health_check"
-#   project_id   = module.project.id
-#   name         = var.ilb_hc_name
-#   scope        = "REGIONAL"
-#   region       = var.region
-#   protocol     = "HTTPS"
-#   port         = var.app_target_port
-#   request_path = "/healthz"
-# }
+module "ilb_health_check" {
+  source       = "../../modules/health_check"
+  project_id   = module.project.id
+  name         = var.ilb_hc_name
+  scope        = "REGIONAL"
+  region       = var.region
+  protocol     = "HTTPS"
+  port         = var.app_target_port
+  request_path = "/healthz"
+}
 
-# module "ilb_neg" {
-#   source     = "../../modules/network_endpoint_group"
-#   project_id = module.project.id
-#   neg_name   = "${var.app_neg_prefix}-${var.app_service_port}"
-#   zones      = [var.zone]
+module "ilb_neg" {
+  source     = "../../modules/network_endpoint_group"
+  project_id = module.project.id
+  neg_name   = "${var.app_neg_prefix}-${var.app_service_port}"
+  zones      = [var.zone]
 
-#   depends_on = [module.app_service]
-# }
+  depends_on = [module.app_service]
+}
 
-# module "ilb_backend_service" {
-#   source     = "../../modules/backend_service"
-#   project_id = module.project.id
-#   name       = var.ilb_bes_name
-#   scope      = "REGIONAL"
-#   region     = var.region
+module "ilb_backend_service" {
+  source     = "../../modules/backend_service"
+  project_id = module.project.id
+  name       = var.ilb_bes_name
+  scope      = "REGIONAL"
+  region     = var.region
 
-#   protocol              = "HTTPS"
-#   port_name             = "https"
-#   load_balancing_scheme = "INTERNAL_MANAGED"
+  protocol              = "HTTPS"
+  port_name             = "https"
+  load_balancing_scheme = "INTERNAL_MANAGED"
 
-#   health_check = module.ilb_health_check.self_link
+  health_check = module.ilb_health_check.self_link
 
-#   backends = [
-#     {
-#       group                 = "projects/${module.project.id}/regions/${var.region}/networkEndpointGroups/${var.app_neg_prefix}-${var.app_service_port}"
-#       balancing_mode        = "RATE"
-#       max_rate_per_endpoint = 1000
-#       capacity_scaler       = 1.0
-#     }
-#   ]
-# }
+  backends = [
+    {
+      group                 = "projects/${module.project.id}/regions/${var.region}/networkEndpointGroups/${var.app_neg_prefix}-${var.app_service_port}"
+      balancing_mode        = "RATE"
+      max_rate_per_endpoint = 1000
+      capacity_scaler       = 1.0
+    }
+  ]
+}
 
-# module "ilb_url_map" {
-#   source          = "../../modules/url_map"
-#   project_id      = module.project.id
-#   name            = var.ilb_url_map_name
-#   scope           = "REGIONAL"
-#   region          = var.region
-#   default_service = module.ilb_backend_service.self_link
-# }
+module "ilb_url_map" {
+  source          = "../../modules/url_map"
+  project_id      = module.project.id
+  name            = var.ilb_url_map_name
+  scope           = "REGIONAL"
+  region          = var.region
+  default_service = module.ilb_backend_service.self_link
+}
 
-# module "ilb_ssl_cert" {
-#   source     = "../../modules/ssl_certificate"
-#   project_id = module.project.id
-#   name       = var.ilb_cert_name
-#   mode       = "SELF_MANAGED"
-#   scope      = "REGIONAL"
-#   region     = var.region
+module "ilb_ssl_cert" {
+  source     = "../../modules/ssl_certificate"
+  project_id = module.project.id
+  name       = var.ilb_cert_name
+  mode       = "SELF_MANAGED"
+  scope      = "REGIONAL"
+  region     = var.region
 
-#   certificate_pem = tls_self_signed_cert.tls.cert_pem
-#   private_key_pem = tls_private_key.tls.private_key_pem
-# }
+  certificate_pem = tls_self_signed_cert.tls.cert_pem
+  private_key_pem = tls_private_key.tls.private_key_pem
+}
 
-# module "ilb_target_proxy" {
-#   source     = "../../modules/target_https_proxy"
-#   project_id = module.project.id
-#   name       = var.ilb_proxy_name
-#   scope      = "REGIONAL"
-#   region     = var.region
+module "ilb_target_proxy" {
+  source     = "../../modules/target_https_proxy"
+  project_id = module.project.id
+  name       = var.ilb_proxy_name
+  scope      = "REGIONAL"
+  region     = var.region
 
-#   url_map          = module.ilb_url_map.self_link
-#   ssl_certificates = [module.ilb_ssl_cert.self_link]
-# }
+  url_map          = module.ilb_url_map.self_link
+  ssl_certificates = [module.ilb_ssl_cert.self_link]
+}
 
-# resource "google_compute_address" "ilb" {
-#   project      = module.project.id
-#   name         = var.ilb_ip_name
-#   region       = var.region
-#   subnetwork   = module.subnet_gke.self_link
-#   address_type = "INTERNAL"
-#   purpose      = "GCE_ENDPOINT"
-# }
+resource "google_compute_address" "ilb" {
+  project      = module.project.id
+  name         = var.ilb_ip_name
+  region       = var.region
+  subnetwork   = module.subnet_gke.self_link
+  address_type = "INTERNAL"
+  purpose      = "GCE_ENDPOINT"
+}
 
-# module "ilb_forwarding_rule" {
-#   source     = "../../modules/forwarding_rule"
-#   project_id = module.project.id
-#   name       = var.ilb_fr_name
-#   scope      = "REGIONAL"
-#   region     = var.region
+module "ilb_forwarding_rule" {
+  source     = "../../modules/forwarding_rule"
+  project_id = module.project.id
+  name       = var.ilb_fr_name
+  scope      = "REGIONAL"
+  region     = var.region
 
-#   target                = module.ilb_target_proxy.self_link
-#   port_range            = "443"
-#   load_balancing_scheme = "INTERNAL_MANAGED"
+  target                = module.ilb_target_proxy.self_link
+  port_range            = "443"
+  load_balancing_scheme = "INTERNAL_MANAGED"
 
-#   network    = module.vpc.self_link
-#   subnetwork = module.subnet_gke.self_link
-#   ip_address = google_compute_address.ilb.self_link
+  network    = module.vpc.self_link
+  subnetwork = module.subnet_gke.self_link
+  ip_address = google_compute_address.ilb.self_link
 
-#   depends_on = [module.subnet_proxy]
-# }
+  depends_on = [module.subnet_proxy]
+}
 
-# # -----------------------------------------------------------------------------
-# # PSC producer — service attachment publishing the internal forwarding rule.
-# # -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# PSC producer — service attachment publishing the internal forwarding rule.
+# -----------------------------------------------------------------------------
 
-# module "psc_service_attachment" {
-#   source     = "../../modules/psc_service_attachment"
-#   project_id = module.project.id
-#   name       = var.psc_attachment_name
-#   region     = var.region
+module "psc_service_attachment" {
+  source     = "../../modules/psc_service_attachment"
+  project_id = module.project.id
+  name       = var.psc_attachment_name
+  region     = var.region
 
-#   target_service = module.ilb_forwarding_rule.self_link
-#   nat_subnets    = [module.subnet_psc_nat.self_link]
+  target_service = module.ilb_forwarding_rule.self_link
+  nat_subnets    = [module.subnet_psc_nat.self_link]
 
-#   connection_preference = length(var.psc_consumer_accept_projects) > 0 ? "ACCEPT_MANUAL" : "ACCEPT_AUTOMATIC"
-#   consumer_accept_lists = var.psc_consumer_accept_projects
+  connection_preference = length(var.psc_consumer_accept_projects) > 0 ? "ACCEPT_MANUAL" : "ACCEPT_AUTOMATIC"
+  consumer_accept_lists = var.psc_consumer_accept_projects
 
-#   reconcile_connections = true
-# }
+  reconcile_connections = true
+}
