@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: commit
+  labels:
+    name: commit
+    managed-by: terraform

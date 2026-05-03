@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: commit-app
+  namespace: commit
+  labels:
+    app: commit-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: commit-app
+  template:
+    metadata:
+      labels:
+        app: commit-app
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - name: https
+              containerPort: 443
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 443
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 20m,  memory: 32Mi }
+            limits:   { cpu: 100m, memory: 128Mi }
+          volumeMounts:
+            - name: tls
+              mountPath: /etc/tls
+              readOnly: true
+            - name: nginx-conf
+              mountPath: /etc/nginx/conf.d
+              readOnly: true
+      volumes:
+        - name: tls
+          secret:
+            secretName: commit-app-tls
+        - name: nginx-conf
+          configMap:
+            name: commit-app-nginx

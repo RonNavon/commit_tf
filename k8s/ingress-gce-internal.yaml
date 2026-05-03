@@ -1,0 +1,18 @@
+# gce-internal Ingress — alternative to the Terraform-managed Internal LB.
+# Use ONE OR THE OTHER, not both.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: commit-app
+  namespace: commit
+  annotations:
+    kubernetes.io/ingress.class: "gce-internal"
+    kubernetes.io/ingress.allow-http: "false"
+    ingress.gcp.kubernetes.io/pre-shared-cert: "commit-ilb-cert"
+    kubernetes.io/ingress.regional-static-ip-name: "commit-ilb-ip"
+spec:
+  defaultBackend:
+    service:
+      name: commit-app
+      port:
+        number: 80

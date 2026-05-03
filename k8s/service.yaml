@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: commit-app
+  namespace: commit
+  labels:
+    app: commit-app
+  annotations:
+    cloud.google.com/neg: '{"exposed_ports": {"443": {"name": "commit-app-neg-443"}}}'
+    # Tell the GCLB the backend speaks HTTPS.
+    cloud.google.com/app-protocols: '{"https":"HTTPS"}'
+spec:
+  type: ClusterIP
+  selector:
+    app: commit-app
+  ports:
+    - name: https
+      port: 443
+      targetPort: 443
+      protocol: TCP
